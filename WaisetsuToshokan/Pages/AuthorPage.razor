@@ -1,0 +1,53 @@
+@page "/AuthorPage"
+@using OpenHentai
+@using OpenHentai.Creatures
+@using OpenHentai.Creations
+
+<PageTitle>Author page</PageTitle>
+
+<h1>Author page</h1>
+
+<p>This component demonstrates fetching author.</p>
+
+@foreach (var author in authors)
+{
+    <h2>@author.FullName</h2>
+
+        var a = author as Author;
+
+        <p>
+            <img src="@a.Picture.ImageSource"/>
+        </p>
+
+        <h3>Alternative names:</h3>
+        foreach (var alternativeName in author.AlternativeNames)
+        {
+            <p>@alternativeName</p>
+        }
+
+        <h3>Creations</h3>
+        foreach (var creation in author.Creations)
+        {
+            <p>@creation.ToString()</p>
+        }
+
+        <h3>Description</h3>
+        <p>@author.Description</p>
+}
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var author = DoujinCreator.CreateYukinoMinato();
+        var book = DoujinCreator.CreateMinatoDoujin();
+        book.Authors = new Dictionary<IAuthor, string> { {author, "Main author" } };
+        author.Creations = new Dictionary<ICreation, string> { { book, "Main author" } };
+        
+        
+        authors = new List<IAuthor> { author };
+        books = new List<IBook> { book };
+    }
+
+    private IEnumerable<IAuthor>? authors;
+    private IEnumerable<IBook>? books;
+}

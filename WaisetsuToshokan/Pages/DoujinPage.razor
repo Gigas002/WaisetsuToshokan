@@ -1,0 +1,80 @@
+@page "/DoujinPage"
+@using OpenHentai
+@using OpenHentai.Creations
+@using OpenHentai.Creatures
+@using OpenHentai.Tags
+@inject NavigationManager NavManager
+
+<PageTitle>Doujin page</PageTitle>
+
+<h1>Doujin page</h1>
+
+<p>This component demonstrates fetching doujinshi.</p>
+
+@foreach (var author in authors)
+{
+    foreach (var creation in author.Creations.Keys)
+    {
+        <h2>@creation.Title</h2>
+                           
+        var b = creation as Doujinshi;
+
+        <p>
+            <img src="@b.Picture.ImageSource"/>
+        </p>
+                           
+        <h3>Alternative titles:</h3>
+        foreach (var alternativeTitle in creation.AlternativeTitles)
+        {
+            <p>@alternativeTitle</p>
+        }
+        
+        <h3>Genres</h3>
+        // var tags = creation.Tags;
+        // var genres = new List<Genre>();
+        // foreach (var tag in tags)
+        // {
+        //     if (tag is EnumTag<Genre> t)
+        //     {
+        //         genres.Add(t.Value);
+        //     }
+        // }
+        // foreach (var genre in creation.Genres)
+        // {
+        //     <p>@genre.ToString()</p>
+        // }
+        
+        <h3>Description</h3>
+        <p>@creation.Description</p>
+                                
+        <h1>Author:</h1>
+        <button class="btn btn-primary" @onclick="GoToAuthor" @onfocus="ShowCock">Author</button>
+    }
+}
+
+@code {
+
+    protected void GoToAuthor()
+    {
+        NavManager.NavigateTo("/AuthorPage");
+    }
+
+    protected void ShowCock()
+    {
+        //<p>Cock!</p>
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var author = DoujinCreator.CreateYukinoMinato();
+        var book = DoujinCreator.CreateMinatoDoujin();
+        book.Authors = new Dictionary<IAuthor, string> { {author, "Main author" } };
+        author.Creations = new Dictionary<ICreation, string> { { book, "Main author" } };
+
+        authors = new List<IAuthor> { author };
+        books = new List<IBook> { book };
+    }
+
+    private IEnumerable<IAuthor>? authors;
+    private IEnumerable<IBook>? books;
+}
