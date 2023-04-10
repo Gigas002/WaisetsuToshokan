@@ -1,6 +1,6 @@
 # WaisetsuToshokan
 
-The nonexistent (*at that moment*) [MyAnimeList](https://myanimelist.net/)-like service for doujins and other adult stuff. Uses [OpenHentai](https://github.com/Gigas002/OpenHentai) as API core and [PostgreSQL](https://www.postgresql.org/) for db stuff
+The nonexistent (*at that moment*) [MyAnimeList](https://myanimelist.net/)-like service for doujins and other adult anime stuff. Uses [OpenHentai](https://github.com/Gigas002/OpenHentai) as API core and [PostgreSQL](https://www.postgresql.org/) for db stuff
 
 ## Why?
 
@@ -8,7 +8,7 @@ There's no analogue of this, so why not? Except for my lack of skills/time, of c
 
 ## State
 
-For current state of project, please look into the [ROADMAP](ROADMAP.md) file, it says everything you want to know. TLDR: [OpenHentai](https://github.com/Gigas002/OpenHentai) and standards for db first, web app later
+For current state of project, please look into the [ROADMAP](ROADMAP.md) file, it says everything you want to know. TLDR: [OpenHentai](https://github.com/Gigas002/OpenHentai) and db dchema first, web app later
 
 ## Contributing
 

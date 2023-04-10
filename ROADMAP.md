@@ -5,13 +5,17 @@ Now it's just a dummy-project without any useful code.
 
 The numbers out here is the priority of task as I see them right now. **1.0** is a point, where beta release is possible, I think
 
-TLDR plan looks something like this:
+TL;DR plan looks something like this:
 
-+- basic API (no events, collections) + DB scheme
+basic API (no events, collections questionable)
+
+basic DB scheme
+
 link code to postgres, update/fix existing API
-API of collections/events + schemes
-link code to postgres, update/fix existing API
-frontend (I hate this shit)
+
+~~API of collections/events + schemes~~ *later*
+
+frontend (**I hate this shit**)
 
 More below
 
