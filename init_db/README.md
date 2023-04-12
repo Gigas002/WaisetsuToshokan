@@ -86,8 +86,16 @@ Find all shounen manga or anime with characters aged lesser than 30yo, that were
 everyone except "name" artist:
 
 ```c
-g::"shounen" && c::"manga" || c::"anime" a::"<30" && -n::"name"
+g::"shounen" && (c::"manga" || c::"anime") a::"<30" && -n::"name"
 ```
+
+Upd 1: There's no point in separating search by name/alternative names, since user most probably doesn't know what he's looking for, so it should be deprecated
+
+Upd 2: deprecate `&&` (`AND`). It should be a default search option. The `||` for `OR` must stay though
+
+**TODO:** work harder on `except` syntax. It's especially essential when talking about tag hierarchy. E.g., how would you write "I want to see `manga` by `name` where he is **not** `secondary_author`"
+
+Is it: `c::"manga" && -n::"name"=>ar::"secondary_author"`? Not clear for user, I think
 
 **TODO:** It's also a good idea to implement import/export macros schemes, so that regular searches would be fast to do. Plus, you can share your search macross with other people. But is there any point in saving them? Its just a string after all... Nah, that seems like a bad idea, but it's worth noting it as `discussable` in community
 
