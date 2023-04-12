@@ -74,6 +74,12 @@ o::"hat" // other, e.g. `clothes`
 p::">30" // pages_count
 ```
 
+The search syntax would look something like this:
+
+`%command%::%value%`, where `::` is a delimeter
+
+(By default, search without specified command will preform a search over `title` and `alternative_titles`)
+
 Example of combined search with exclude tag feature:
 
 Find all shounen manga or anime with characters aged lesser than 30yo, that were created by
@@ -97,7 +103,7 @@ Since we won't be indexing and searching through descriptions and other localiza
 
 So... I don't think it's a good idea, but we can push descriptions like so:
 
-```text
+```c
 en-US::"This is description about yet another stupid manga";ja-JP::"お金が欲しい"
 ```
 
@@ -135,7 +141,7 @@ public class Creation
 
 Then, in database:
 
-```text
+```c
 authors_creations.sql
 
 author_id creation_id author_role
@@ -149,14 +155,14 @@ Discussable. If implemented, then only for main tags, like name, etc. For exampl
 
 e.g.
 
-```text
-a::"author"=>ar::"main_artist"
+```c
+n::"author"=>ar::"main_artist"
 ```
 
 or separate expression inside parenthesis:
 
-```text
-(a::"author" && ar::"main_artist")
+```c
+(n::"author" && ar::"main_artist")
 ```
 
 Anyway, it should take no effect if there's no binding, no error must be thrown
