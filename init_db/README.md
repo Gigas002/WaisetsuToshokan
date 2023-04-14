@@ -49,6 +49,48 @@ Future:
 ? creations_events
 ```
 
+## Tables listing
+
+These do **not** include upcoming features, like `events` yet
+
+**TODO:** how to write languages, alt. titles, etc? Everything, which type is `ICollection` **should not** exist inside same table. The same *probably* is true for custom classes. The enums are safe-to-go and easily parsable from `string`
+
+**Main tables:**
+
+- circles
+- creations
+- doujins
+- authors
+- chars
+- tags
+
+**Secondary tables:**
+
+Refers to other entities and `main` stuff's properties
+
+- 
+
+**Main tables bindings:**
+
+Naming priority: authors > creations > chars > circles > tags
+
+- authors_circles
+- authors_creations
+- authors_chars
+- authors_tags
+- creations_circles
+- creations_chars
+- creations_tags
+<!-- - chars_circles  --> Discussable
+- chars_tags
+- circles_tags
+
+Note: creations_doujins is **not** needed, since `doujins` inherits from `creation` and has `creation_id` field in it
+
+**Secondary tables bindings:**
+
+Naming priority:
+
 ## Tag search scheme and syntax (WIP)
 
 Its deeply bound to tagging and database schemes, so im thinking about writing a standard for it while working on them. It should be easy to use for users, powerful and should not explode the database/server with long queries
@@ -196,3 +238,183 @@ Needed, but not in priority. Related to website project only, so no point in thi
 ## Tag votes
 
 Do we need it? The same system, as it's on sadpanda. Related to WT only
+
+## Languages/AlternativeTitles/etc problems
+
+Several properties in above tables have multiple values/collections inside. We need to deal with that the best way possible. The below example is for `languages`, but it's mostly the same for other classes with this problem
+
+One of the main points to choose one or another system is which one would be easier (*in terms of performance for server/db*) to search data
+
+`LanguageInfo` prototype class for reference:
+
+```c#
+public class LanguageInfo
+{
+    // TODO: static methods can also be useful
+
+    public CultureInfo Language { get; set; }
+
+    // From lang code, e.g. `en-US`
+    public CultureInfo GetFromCode(string languageCode) => CultureInfo.Parse(languageString);
+
+    // To lang code, e.g. `en-US`
+    public override string ToString() => Language.ToString();
+
+    // e.g. CutureInfo or `ru-RU` will become `Русский` in output string
+    public string ToLocalizedString() => Language.ToLocalizedString();
+
+    public bool IsOfficial { get; set; } = false;
+}
+```
+
+### 1st choice
+
+**Format string:** `en-US::true`
+
+**Table layout:**
+
+- `creations.sql` -> no `language` info at all
+- `creations_languages.sql` -> `creation_id`, `language`
+
+**Class layout:**
+
+```c#
+public class CreationsLanguages
+{
+    public ulong CreationId { get; set; }
+
+    public string Language { get; set; }
+
+    // or when parsed
+    public LanguageInfo Language { get; set; }
+}
+```
+
+**Pros:**
+
+- No need to update `creations` table each time `languages` changed
+- Simple code
+
+**Cons:**
+
+- Additional table with lots of data, which means harder to create and support, time-consuming queries as table grows fast?
+- Need to parse string server-side
+- Hard to search for official/unofficial translation
+
+
+### 2nd choice
+
+**Format string:** `en-US::true;ru-RU:false`
+
+**Table layout:**
+
+- `creations.sql` -> `languages` column contains all info in formatted string
+
+**Class layout:**
+
+```c#
+public class Creation
+{
+    public string Languages { get; set; }
+
+    // or when parsed
+    public IEnumerable<LanguageInfo> Languages { get; set; }
+}
+```
+
+**Pros:**
+
+- No need for fat additional tables
+- Simple code
+
+**Cons:**
+
+- Need to update `creations` table each time `languages` changed
+- Need to parse string server-side
+- Hard to search for official/unofficial translation
+
+### 3rd choice
+
+Mix of **1** and **2**
+
+**Format string:** `en-US::true;ru-RU:false`
+
+**Table layout:**
+
+- `creations.sql` -> no `language` info at all
+- `creations_languages.sql` -> `creation_id`, `languages` column contains all info in formatted string
+
+**Class layout:**
+
+```c#
+public class CreationsLanguages
+{
+    public string Languages { get; set; }
+
+    // or when parsed
+    public IEnumerable<LanguageInfo> Languages { get; set; }
+}
+```
+
+**Pros:**
+
+- No need to update `creations` table each time `languages` changed
+- Simple code
+
+**Cons:**
+
+- Additional table with lots of data, but less, than in **1** approach
+- Need to parse string server-side
+- Hard to search for official/unofficial translation
+
+### 4th choice
+
+**Format string:** 
+
+- `language` -> `en-US`
+- `is_official` -> `true`
+
+**Table layout:**
+
+- `creations.sql` -> no `language` info at all
+- `creations_languages.sql` -> `creation_id`, `language`, `is_official`
+
+**Class layout:**
+
+```c#
+public class CreationsLanguages
+{
+    public ulong CreationId { get; set; }
+
+    public string Language { get; set; }
+
+    // or
+    public LanguageInfo Language { get; set; }
+
+    public bool IsOfficial { get; set; }
+}
+```
+
+**Pros:**
+
+- Search for official/unofficial translations easily
+- Every entity is divided in it's own class in code
+- No need to parse string server-side
+- No need to update `creations` table each time `languages` changed
+
+**Cons:**
+
+- Additional table with lots of data, which means harder to create and support, time-consuming queries as table grows fast?
+
+## Difference between storing properties: enums, custom class/collections and tags
+
+Tags are different from values above and from enums:
+
+- `Enum`s can be stored with one string in table and easily parsed server-side. Enum's categories are pretty limited and they always have only one value at time. `Enum`s values are crystal-clear from their names
+- Custom-`class` values or custom-`class` collections have more properties, than just a `value`
+- Tags have a lot of periodically addable categories, which are hard to be `enum`ed and they have only one `value`, which can be represented as string. Tags can have `description` as additional property, because, compared to `enum`s they're not very clear
+
+E.g., `language` could have been enum if it didn't have the `is_official` property. It could also be a `tag` in this case, but `enum` is prefferable, since `language`s list is limited
+
+The tag `parody` can't be an `enum`, since there's too many different anime/manga of which `parody` is created, and new can be added frequently. It also can't be an `enum`, since each title requires custom `description`. `parody` can be a custom `class`, but there't no point in it, since it only needs a generic `value` and `description` properties
+
