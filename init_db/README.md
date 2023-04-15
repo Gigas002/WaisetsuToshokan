@@ -53,9 +53,9 @@ Future:
 
 These do **not** include upcoming features, like `events` yet
 
-**TODO:** how to write languages, alt. titles, etc? Everything, which type is `ICollection` **should not** exist inside same table. The same *probably* is true for custom classes. The enums are safe-to-go and easily parsable from `string`
+### Main tables
 
-**Main tables:**
+**Listing:**
 
 - circles
 - creations
@@ -64,13 +64,7 @@ These do **not** include upcoming features, like `events` yet
 - chars
 - tags
 
-**Secondary tables:**
-
-Refers to other entities and `main` stuff's properties
-
-- 
-
-**Main tables bindings:**
+**Bindings:**
 
 Naming priority: authors > creations > chars > circles > tags
 
@@ -87,9 +81,19 @@ Naming priority: authors > creations > chars > circles > tags
 
 Note: creations_doujins is **not** needed, since `doujins` inherits from `creation` and has `creation_id` field in it
 
-**Secondary tables bindings:**
+### Secondary tables
+
+Refers to other entities and `main` stuff's properties
+
+**Listing:**
+
+- 
+
+**Bindings:**
 
 Naming priority:
+
+- 
 
 ## Tag search scheme and syntax (WIP)
 
@@ -240,6 +244,8 @@ Needed, but not in priority. Related to website project only, so no point in thi
 Do we need it? The same system, as it's on sadpanda. Related to WT only
 
 ## Languages/AlternativeTitles/etc problems
+
+UPD. **4th** choice seems to be the **best** in terms of searching capabilities. Parsing string on indexed columns is **bad**
 
 Several properties in above tables have multiple values/collections inside. We need to deal with that the best way possible. The below example is for `languages`, but it's mostly the same for other classes with this problem
 
@@ -418,3 +424,35 @@ E.g., `language` could have been enum if it didn't have the `is_official` proper
 
 The tag `parody` can't be an `enum`, since there's too many different anime/manga of which `parody` is created, and new can be added frequently. It also can't be an `enum`, since each title requires custom `description`. `parody` can be a custom `class`, but there't no point in it, since it only needs a generic `value` and `description` properties
 
+Everything, which type is `ICollection` **should not** exist inside same table. The same *probably* is true for custom classes. The enums are safe-to-go and easily parsable from `string`
+
+## Localizable data inside DB
+
+Since it't not indexed/there's no search, it's OK to store them as `json`(`bson`) string. E.g. for description:
+
+```json
+{
+    [
+        {
+            "Language": "en-US",
+            "Description": "This is description"
+        },
+        {
+            "Language": "ru-RU",
+            "Description": "Пошел нахуй"
+        }
+    ]
+}
+```
+
+## Refactor entries, that contain only language and value properties
+
+Should look something like this. Applies to: NameInfo, TitleInfo, DescriptionInfo, maybe more. Name's not decided yet
+
+```c#
+public class LocalizableEntry
+{
+    public LanguageInfo Language { get; set; }
+    public string Value { get; set; }
+}
+```
