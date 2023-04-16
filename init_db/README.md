@@ -1,99 +1,277 @@
 # blah-blah-blah
 
-Tables and links:
-
-// TODO: upgrade to tags system
-
-authors == circles -> authors_circles -> creations -> authors_creations -> (creation_relations) -> doujinshi -> characters -> creations_characters == (character_relations)
-
-Partially done:
-
-```text
-+ authors
-+ circles
-+ authors_circles
-+ creations
-+ authors_creations
-+ creation_relations
-+ doujinshi
-+ characters
-+ creations_characters
-+ character_relations
-```
-
-Not yet done:
-
-**Postgres seems not to work with arrays-of-FKs, so we need to shit out tons of tables for tags**
-
-```text
-- authors_tags
-- creations_tags
-- characters_tags
-- tags
-- tags_relations
-```
-
-Questionable:
-
-```text
-? circles_tags
-? circles_creations
-? tags_categories
-? collections // creations_collections // collection IS creation, so is this useless?
-```
-
-Future:
-
-```text
-? events
-? creations_events
-```
 
 ## Tables listing
 
 These do **not** include upcoming features, like `events` yet
 
+**Obsolete**, need update for below stuff, table initialization order: authors == circles -> authors_circles -> creations -> authors_creations -> (creation_relations) -> doujinshi -> characters -> creations_characters == (character_relations)
+
+
 ### Main tables
 
 **Listing:**
 
-- circles
-- creations
-- doujins
-- authors
-- chars
-- tags
+circles:
+- id
+- ~~title~~ table: circles_titles
+- ~~alternative_titles~~ table: circles_titles
+- table: authors_circles
+- table: creations_circles
 
-**Bindings:**
+
+creations:
+- id
+- ~~title~~ table: creations_titles
+- ~~alternative_titles~~ table: creations_titles
+- ~~authors (author+role)~~ table: authors_creations
+- publish_started
+- publish_ended
+- external_links (json)
+- description (json)
+- ~~events~~ WIP, probably creations_events
+- ~~collections~~ WIP
+- ~~characters (character+relation)~~ table: creations_characters
+- picture **TODO** pictures
+- ~~languages~~ creations_languages
+- rating
+- ~~genres~~ obsoleted by tags
+- publish_status
+- censorship
+- ~~tags~~ table: creations_tags
+- ~~adaptations~~ table: obsoleted by tags
+
+
+doujinshi:
+- creation_id
+- id
+- length
+- volumes
+- chapters
+- ~~has_images~~ `true` by default for doujin, inherited from `book`
+- is_colored (**TODO**: colored fan/official with `ColorInfo`?)
+
+
+authors:
+- creature_id
+- id
+- ~~first_name~~ table: authors_real_names
+- ~~last_name~~ table: authors_real_names
+- ~~full_name~~ table: authors_real_names
+- ~~alternative_names~~ table: authors_real_names
+- ~~additional_details~~ obsolete: write everything as description
+- description (json)
+- birthday
+- age
+- picture **TODO**: pictures
+- ~~species~~ always human
+- gender
+- ~~tags~~ table: authors_tags
+- ~~author_name~~ table: authors_artist_names
+- ~~alternative_author_names~~ table: authors_artist_names
+- ~~circles~~ table: authors_circles
+- external_links (json)
+- ~~creations~~ (creation+role) table: authors_creations
+- ~~relations~~ (author + realtion) obsolete
+- ~~genitals~~ obsolete
+
+
+characters:
+- creature_id
+- id
+- ~~first_name~~ table: characters_names
+- ~~last_name~~ table: characters_names
+- ~~full_name~~ table: characters_names
+- ~~alternative_names~~ table: characters_names
+- ~~additional_details~~ obsolete
+- description (json)
+- birthday
+- age
+- picture **TODO**: pictures
+- species **TODO**: I don't remember if I handle this
+- gender
+- ~~tags~~ table: characters_tags
+- ~~relations~~ (chara + relation) table: characters_relations
+- genitals
+- ~~featured_in~~ (creation + relation) table: creations_characters
+
+
+tags:
+- id
+- category (string, but enum in code)
+- value
+- description (json)
+- ~~additional_info~~ obsolete
+
+
+**Relational:**
 
 Naming priority: authors > creations > chars > circles > tags
 
-- authors_circles
-- authors_creations
-- authors_chars
-- authors_tags
-- creations_circles
-- creations_chars
-- creations_tags
-<!-- - chars_circles  --> Discussable
-- chars_tags
-- circles_tags
+*Uses `-info` class*
+circles_titles
+- circle_id
+- title
+- language
 
-Note: creations_doujins is **not** needed, since `doujins` inherits from `creation` and has `creation_id` field in it
 
-### Secondary tables
+creations_circles
+- creation_id
+- circle_id
 
-Refers to other entities and `main` stuff's properties
 
-**Listing:**
+*Uses `-info` class*
+authors_real_names
+- author_id
+- name
+- language
 
-- 
 
-**Bindings:**
+authors_tags
+- author_id
+- tag_id
 
-Naming priority:
 
-- 
+*Uses `-info` class*
+authors_artist_names
+- author_id
+- name
+- language
+
+
+authors_circles
+- author_id
+- circle_id
+
+
+authors_creations
+- author_id
+- creation_id
+- author_role
+
+
+*Uses `-info` class*
+creations_titles
+- creation_id
+- title
+- language
+
+
+creations_characters
+- creation_id
+- character_id
+- character_role
+
+
+*Uses `LanguageInfo` class*
+creations_languages
+- creation_id
+- language
+- is_official
+
+
+creations_tags
+- creation_id
+- tag_id
+
+
+*Uses `-info` class*
+characters_names
+- character_id
+- name
+- language
+
+
+characters_tags
+- character_id
+- tag_id
+
+
+**TODO**: is this the best way possible to show relations between chara?
+
+characters_realtions
+- origin_character_id
+- relative_character_id
+- relation
+
+
+tags_relations
+- master_id
+- slave_id
+
+
+**TODO**: can rework `ICreature` child like so:
+
+
+creatures:
+- id
+- ~~first_name~~ table: creatures_names
+- ~~last_name~~ table: creatures_names
+- ~~full_name~~ table: creatures_names
+- ~~alternative_names~~ table: creatures_names
+- ~~additional_details~~ obsolete
+- description (json)
+- birthday
+- age
+- picture **TODO**: pictures
+- species **TODO**: I don't remember if I handle this
+- gender
+- ~~tags~~ table: creatures_tags
+- ~~creature_relations~~ table: creatures_relations
+- genitals
+
+
+author:
+- creature_id
+- id
+- ~~author_name~~ table: authors_names
+- ~~alternative_author_names~~ table: authors_names
+- ~~circles~~ table: authors_circles
+- external_links (json)
+- ~~creations~~ table: authors_creations
+
+
+character:
+- creature_id
+- id
+- ~~featured_in~~ table: creations_characters
+
+
+*Uses `-info` class*
+creatures_names
+- creature_id
+- name
+- language
+
+
+creatures_tags
+- creature_id
+- tag_id
+
+
+creatures_realtions (*for both author and character*)
+- origin_creature_id
+- relative_creature_id
+- relation
+
+
+*Uses `-info` class*
+authors_names
+- author_id
+- name
+- language
+
+
+authors_circles
+- author_id
+- circle_id
+
+
+authors_creations
+- author_id
+- creation_id
+- author_role
+
 
 ## Tag search scheme and syntax (WIP)
 
@@ -145,31 +323,13 @@ Is it: `c::"manga" && -n::"name"=>ar::"secondary_author"`? Not clear for user, I
 
 **TODO:** It's also a good idea to implement import/export macros schemes, so that regular searches would be fast to do. Plus, you can share your search macross with other people. But is there any point in saving them? Its just a string after all... Nah, that seems like a bad idea, but it's worth noting it as `discussable` in community
 
-## Localization issues
-
-How to localize db content? E.g. manga description. Seems hard/resource-painful to implement
-
-UI is easily localizable, so it's out of question
-
-Here's one of the ways to do so:
-
-Since we won't be indexing and searching through descriptions and other localizable content, it's ok (?) for them to take lots of space into column
-
-So... I don't think it's a good idea, but we can push descriptions like so:
-
-```c
-en-US::"This is description about yet another stupid manga";ja-JP::"お金が欲しい"
-```
-
-And then parse strings after taking value from DB
-
-I don't think anything except descriptions should be localized. Tags **must** not be localized, names have `alternative_name` field and a way to be found, and that's kind of it?
 
 ## Db request pool
 
 Add/fix request pool should not affect actual dbs until it's pushed by mods/admins, so we need to think about threshold database or tables and manage their cleanup/migrations
 
 Probably the best option is to have a threshold database and clean it once per week or so, migrating yet unmerged entries into new threshold
+
 
 ## Discussable: author's category, that depends on content type feature.
 
@@ -202,6 +362,7 @@ author_id creation_id author_role
 ```
 
 Looks ok I guess?
+
 
 ## Tag hierarchy/binding
 
@@ -427,6 +588,8 @@ The tag `parody` can't be an `enum`, since there's too many different anime/mang
 Everything, which type is `ICollection` **should not** exist inside same table. The same *probably* is true for custom classes. The enums are safe-to-go and easily parsable from `string`
 
 ## Localizable data inside DB
+
+I don't think anything except descriptions should be localized. Tags **must** not be localized, names have `alternative_name` field and a way to be found, and that's kind of it?
 
 Since it't not indexed/there's no search, it's OK to store them as `json`(`bson`) string. E.g. for description:
 
