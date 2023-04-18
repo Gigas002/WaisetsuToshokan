@@ -1,5 +1,28 @@
 # blah-blah-blah
 
+* [Tables listing](#tables-listing)
+  + [Main tables](#main-tables)
+* [Tag search scheme and syntax (WIP)](#tag-search-scheme-and-syntax--wip-)
+  + [Search hierarchy](#search-hierarchy)
+* [Db request pool](#db-request-pool)
+* [Tag hierarchy/binding (on species example)](#tag-hierarchy-binding--on-species-example-)
+* [Image gallery for artist/creations/etc](#image-gallery-for-artist-creations-etc)
+* [About tagging rules, adding info on website, etc](#about-tagging-rules--adding-info-on-website--etc)
+* [About voting for entries](#about-voting-for-entries)
+* [Comments, discussions, users, etc](#comments--discussions--users--etc)
+* [Tag votes](#tag-votes)
+* [Languages/AlternativeTitles/etc problems](#languages-alternativetitles-etc-problems)
+  + [1st choice](#1st-choice)
+  + [2nd choice](#2nd-choice)
+  + [3rd choice](#3rd-choice)
+  + [4th choice](#4th-choice)
+* [Difference between storing properties: enums, custom class/collections and tags](#difference-between-storing-properties--enums--custom-class-collections-and-tags)
+* [Localizable data inside DB](#localizable-data-inside-db)
+* [Refactor entries, that contain only language and value properties](#refactor-entries--that-contain-only-language-and-value-properties)
+* [Working with relations](#working-with-relations)
+* [Reading collections](#reading-collections)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
 ## Tables listing
 
