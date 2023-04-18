@@ -324,6 +324,52 @@ Is it: `c::"manga" && -n::"name"=>ar::"secondary_author"`? Not clear for user, I
 **TODO:** It's also a good idea to implement import/export macros schemes, so that regular searches would be fast to do. Plus, you can share your search macross with other people. But is there any point in saving them? Its just a string after all... Nah, that seems like a bad idea, but it's worth noting it as `discussable` in community
 
 
+**Example of excluding search**
+
+
+Search for all `fantasy_creature`s except `goblin`s:
+
+```sql
+fc_id = SELECT tag_id FROM tags WHERE tag_category = 'species' AND tag_value = 'fantasy_creature'
+gob_id = SELECT tag_id FROM tags WHERE tag_category = 'species' AND tag_value = 'goblin'
+SELECT * FROM tags_relations WHERE master_tag_id = fc_id AND slave_tag_id != gob_id
+```
+
+### Search hierarchy
+
+User should be able to access table fields for search. This is NOT related to tag hierarchy e.g. user wants to find artist named `Asanagi`:
+
+```
+search: Asanagi
+full syntax: author_name::'Asanagi'
+```
+
+Pretty simple, right? But what if user wants to find works, where `Asanagi` is a secondary artist?
+It means, user wants to enumerate through all `ICreation`s, where `Artists` collection returns
+`Asanagi` with `secondary_artist` value:
+
+```
+search: author_name::'Asanagi'=>author_role='secondary_artist'
+```
+
+This is different from tag hierarchy from up above thread, because tags have inner, code-prescribed behavior and you don't need to access their fields directly
+
+Tags should be able to inherit from object where they exist, e.g.
+
+Search for `female` `slime` tagged galleries:
+
+```
+search: character_gender::'female'=>tag::'species'::'slime'
+```
+
+Search for all galleries, tagged with `slime`:
+
+```
+search: tag::'species'::'slime'
+```
+
+
+
 ## Db request pool
 
 Add/fix request pool should not affect actual dbs until it's pushed by mods/admins, so we need to think about threshold database or tables and manage their cleanup/migrations
@@ -331,7 +377,7 @@ Add/fix request pool should not affect actual dbs until it's pushed by mods/admi
 Probably the best option is to have a threshold database and clean it once per week or so, migrating yet unmerged entries into new threshold
 
 
-## Tag hierarchy/binding
+## Tag hierarchy/binding (on species example)
 
 Discussable. If implemented, then only for main tags, like name, etc. For example, if we want to find all the works, where `author` is `main_author`, how would we do it?
 
@@ -348,6 +394,72 @@ or separate expression inside parenthesis:
 ```
 
 Anyway, it should take no effect if there's no binding, no error must be thrown
+
+**Species thoughts and example**
+
+Since there's millions of different species, we should either divide them by main category
+e.g. `Animal`, `Human`, `Insect`, etc
+either handle them with `Tags`, e.g. `species::insect`
+The choice depends on count of categories
+
+If we're to implement second system, then it would also be a great
+idea to insert a tag hierarchy here
+E.g. sometimes someone wants to find a specific tag, like
+`species::goblin` tagged galleries, but I think mostly people are more
+abstract with their search, so the base for `species::goblin` should be a 
+`species::fantasy_creature`
+
+Current master-slave tag system is designed to redirect
+slave searches to master
+
+```sql
+insert into tags values 0, 'fantasy_creatures', 'species';
+insert into tags values 1, 'goblin', 'species';
+insert into tags_relations values 0, 1, 'master'
+
+insert into tags values 2, 'jojo bizzare adventure', 'parody';
+insert into tags values 3, 'jjba', 'parody';
+insert into tags_relations values 2, 3, 'master'
+```
+
+search by `fantasy_creatures`:
+
+```sql
+select tag_id from tags where type='species' AND value='fantasy_creatures'
+[0]
+select slave_id from tags_relations where master_tag_id=0
+[1]
+select * from tags where tag_id = 0 or tag_id = 1
+```
+
+search by `jjba`:
+
+
+```sql
+select tag_id from tags where type='parody' AND value='jjba'
+[3] // slave tag jjba
+select slave_id from tags_relations where master_id = 3
+[] // check tag's slaves == we MUST show all slaves
+select master_id from tags_relations where slave_id = 3
+[2] // check tag's master. In this case we MUST show the master
+select * from creations_tags where tag_id = 3 or tag_id = 2
+```
+
+search by `goblin`:
+
+```sql
+select tag_id from tags where type='species' and value = 'goblin'
+[1]
+select slave_id from tags_relations where master_id = 1
+[]
+we SHOULD NOT read `master_id` in this case, but how can we know?
+should this decision be dependent on tag_type?
+```
+
+```
+tag::species::goblin
+```
+
 
 ## Image gallery for artist/creations/etc
 
@@ -585,4 +697,105 @@ public class LocalizableEntry
     public LanguageInfo Language { get; set; }
     public string Value { get; set; }
 }
+```
+
+## Working with relations
+
+How should we handle writing relations into db? I can see two
+approaches:
+
+**1.**
+
+```
+characters_relations.sql
+origin_character_id related_character_id relation_type
+```
+
+Here we write relations into `characters_relations.sql` table.
+We make **TWO** writes when adding one relation, e.g:
+
+```sql
+INSERT INTO characters_relations VALUES(0, 1, 'friend')
+INSERT INTO characters_relations VALUES(1, 0, 'friend')
+```
+
+**UPD. Can be done with one insert:**
+
+```sql
+INSERT INTO characters_relations VALUES(0, 1, 'friend'),(1, 0, 'friend')
+```
+
+Then, when extracting the data, we make **ONE** select for each character, searching only by `origin_character_id` e.g.:
+
+```sql
+SELECT * FROM characters_relations WHERE origin_character_id = 0
+```
+
+This apporach seem very logical and also gives an opportunity to make
+relations, where `character_1` thinks of `character_2` as `friend`,
+but `character_2` thinks about `character_1` as `enemy`
+
+2.
+
+```
+charaters_relations.sql
+origin_character_id related_character_id relation_type
+```
+
+Here we write relations into `characters_relations.sql` table.
+We make **ONE** write when adding one relation, e.g:
+
+```sql
+INSERT INTO characters_relations VALUES(1, 0, 'friend')
+```
+
+Then, when extracting the data, we make TWO selects for each character, searching only by both `origin_character_id` and `related_character_id` e.g.:
+
+```sql
+SELECT * FROM characters_relations WHERE origin_character_id = 0
+SELECT * FROM characters_relations WHERE related_character_id = 0
+```
+
+or
+
+```sql
+SELECT * FROM characters_relations WHERE origin_character_id = 0 OR related_character_id = 0
+```
+
+And then analyze the selected data
+
+
+## Reading collections
+
+```
+relation_types: collection_master, collection_slave, parent, child, alternative
+creation_type: manga, magazine, tankoubon ...
+```
+
+No table inheritance (`PostgreSQL` feature):
+
+```
+creations: creation_id creation_type title ...
+manga: creation_id length chapter ...
+```
+
+Then, get the data from tables with two queries:
+
+```sql
+real_class = SELECT creation_type FROM creations WHERE creation_id = 0
+SELECT * FROM real_class WHERE creation_id = 0
+```
+
+If we use inheritance, there's two queries too, but lesser fields in tables:
+
+```
+creations: id title ... // rename creation_id to id
+manga: length chapter ... // we don't need creation_id and id since it's inherited
+```
+
+Get data like this:
+
+```sql
+real_class = SELECT creations.tableoid::regclass FROM creations WHERE creations.id= 0;
+SELECT * FROM real_class WHERE creation_id = 0;
 ```
