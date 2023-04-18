@@ -331,39 +331,6 @@ Add/fix request pool should not affect actual dbs until it's pushed by mods/admi
 Probably the best option is to have a threshold database and clean it once per week or so, migrating yet unmerged entries into new threshold
 
 
-## Discussable: author's category, that depends on content type feature.
-
-e.g. Author "name" is an artist. He is a `main_artist` for `creation_1`, but he also participate in some magazines as main page illustrator, therefore for these magazines he is a `main_page_artist` or something like that.
-
-The outcome of implementing this feature will be:
-- Ability to add authors as `secondary_artist` (*name not yet decided*) to some works, where they usualy are not tagged (*not implemented even on sadpanda*)
-- Ability to search for creations using `artist_category` switch
-
-Also, I guess we still would be in need to implement such feature in future, when adding the `games` objects onto standard. These **require** artist to have diffrenet tasks, since there illustrators, programmers and so on (*though I don't think we'll need to tag every each one of them into creation's page lol*)
-
-How can this be done?
-
-Let's see...
-
-```c#
-public class Creation
-{
-    // AuthorCategory is enum
-    public Dictionary<IAuthor, AuthorCategory> Authors { get; set; }
-}
-```
-
-Then, in database:
-
-```c
-authors_creations.sql
-
-author_id creation_id author_role
-```
-
-Looks ok I guess?
-
-
 ## Tag hierarchy/binding
 
 Discussable. If implemented, then only for main tags, like name, etc. For example, if we want to find all the works, where `author` is `main_author`, how would we do it?
