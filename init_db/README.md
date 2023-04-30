@@ -822,3 +822,9 @@ Get data like this:
 real_class = SELECT creations.tableoid::regclass FROM creations WHERE creations.id= 0;
 SELECT * FROM real_class WHERE creation_id = 0;
 ```
+
+## Project type
+
+At first I thought I will write this project, using avalonia, so I will be able to use simple `xaml` to build UI and don't fuck with usual web-shit. But nah, I know it will be a bad decision, no one will be able to support this code and it's probably bad performance-wire. So I've decided to give ASP.NET a try once more, and studying it right now.
+
+I think this project should be a hosted `blazorwasm`, probably a pwa in a distant future, so we can ease the installation on mobile devices.
